@@ -12,12 +12,14 @@ const startSound = new Audio('media/start.mp3');
 const endWarningSound = new Audio('media/end_warning.mp3');
 const missSound = new Audio('media/miss.mp3');
 const hitSound = new Audio('media/hit.mp3');
+const clickSound = new Audio('media/click.mp3');
+// clickSound is already declared later in the file, so this declaration should be removed
 
 let lastHole;
 let timeUp = false;
 let score = 0;
 let countdown;
-let highScore = 0;
+// let highScore = 0;
 let bombHits = 0;
 let warningPlayed = false;
 
@@ -153,15 +155,69 @@ function endGame() {
     timeUp = true;
     clearInterval(countdown);
     
-    if (score > highScore) {
-        highScore = score;
-        highScoreDisplay.textContent = highScore;
-    }
-    
     finalScoreDisplay.textContent = score;
-    gameOverModal.style.display = 'block';
+    gameOverModal.style.display = 'flex'; // Change to flex to match the CSS
     
     // Show the start button again
     const startButton = document.querySelector('.start-button');
     startButton.style.display = 'block';
 }
+
+function closeGameOver() {
+    clickSound.play();
+    gameOverModal.style.display = 'none';
+    startGame(); // This will start a new game
+}
+    // Add this function to handle the Play Again button click
+    // Add the click sound at the top with other audio declarations
+    
+    
+    function closeGameOver() {
+        clickSound.play();
+        gameOverModal.style.display = 'none';
+        
+        // Reset game state
+        scoreBoard.textContent = 0;
+        timeUp = false;
+        score = 0;
+        bombHits = 0;
+        bombHitsDisplay.textContent = '0/3';
+        warningPlayed = false;
+        
+        // Reset timer
+        let timeLeft = 120;
+        timeDisplay.textContent = timeLeft;
+        timeDisplay.style.color = 'initial';
+        
+        // Clear all moles/bombs
+        holes.forEach(hole => {
+            hole.classList.remove("up", "bomb");
+            hole.querySelector(".mole").style.backgroundImage = "url(assets/mole.svg)";
+        });
+        
+        // Start new game
+        startSound.play();
+        peep();
+        countdown = setInterval(() => {
+            timeLeft--;
+            timeDisplay.textContent = timeLeft;
+            
+            if (timeLeft <= 10 && !warningPlayed) {
+                endWarningSound.play();
+                timeDisplay.style.color = 'red';
+                warningPlayed = true;
+            }
+            
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                timeUp = true;
+                endGame();
+            }
+        }, 1000);
+    }
+    
+    // Update the start button click handler
+    document.querySelector('.start-button').addEventListener('click', () => {
+        clickSound.play();
+    });
+// This closing brace appears to be extra and should be removed as it doesn't match any opening brace
