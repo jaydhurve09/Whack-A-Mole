@@ -43,6 +43,11 @@ const holes = document.querySelectorAll(".hole");
       }
 
       function startGame() {
+        // Disable start button
+        const startButton = document.querySelector('.start-button');
+        startButton.disabled = true;
+        startButton.style.opacity = '0.5';
+        
         clearInterval(countdown);
         scoreBoard.textContent = 0;
         timeUp = false;
@@ -67,7 +72,17 @@ const holes = document.querySelectorAll(".hole");
           timeUp = true;
           endGame();
         }, 120000); // 2 minutes
-      }
+}
+
+function closeGameOver() {
+        gameOverModal.style.display = 'none';
+        // Reset timer display
+        timeDisplay.textContent = '120';
+        // Re-enable start button
+        const startButton = document.querySelector('.start-button');
+        startButton.disabled = false;
+        startButton.style.opacity = '1';
+}
 
       function endGame() {
         timeUp = true;
