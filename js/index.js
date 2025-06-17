@@ -1,16 +1,25 @@
 const holes = document.querySelectorAll(".hole");
-      const scoreBoard = document.querySelector(".score");
-      const timeDisplay = document.getElementById('time');
-      const moles = document.querySelectorAll(".mole");
-      const gameOverModal = document.getElementById('gameOver');
-      const finalScoreDisplay = document.getElementById('finalScore');
-      const highScoreDisplay = document.getElementById('highScore');
-      
-      let lastHole;
-      let timeUp = false;
-      let score = 0;
-      let countdown;
-      let highScore = 0;
+const scoreBoard = document.querySelector(".score");
+const timeDisplay = document.getElementById('time');
+const moles = document.querySelectorAll(".mole");
+const gameOverModal = document.getElementById('gameOver');
+const finalScoreDisplay = document.getElementById('finalScore');
+const highScoreDisplay = document.getElementById('highScore');
+
+// Add sound effects
+const bombSound = new Audio('media/bomb.mp3');
+const startSound = new Audio('media/start.mp3');
+const endWarningSound = new Audio('media/end_warning.mp3');
+const missSound = new Audio('media/miss.mp3');
+const hitSound = new Audio('media/hit.mp3');
+
+let lastHole;
+let timeUp = false;
+let score = 0;
+let countdown;
+let highScore = 0;
+let bombHits = 0;
+let warningPlayed = false;
 
       // Load high score from memory
       let savedHighScore = 0;
@@ -33,99 +42,126 @@ const holes = document.querySelectorAll(".hole");
       }
 
       function peep() {
-        const time = randomTime(200, 1000);
+        if (timeUp) return;
+        
+        const isBomb = Math.random() < 0.2; // 20% chance of bomb
+        const time = isBomb ? randomTime(1500, 3000) : randomTime(1000, 2000); // Increased time ranges
         const hole = randomHole(holes);
-        hole.classList.add("up");
+        
+        if (isBomb) {
+            hole.classList.add("up", "bomb");
+            hole.querySelector(".mole").style.backgroundImage = "url(assets/bomb.png)";
+        } else {
+            hole.classList.add("up");
+            hole.querySelector(".mole").style.backgroundImage = "url(assets/mole.svg)";
+        }
+        
+        hole.addEventListener('mouseleave', function onMouseLeave() {
+            if (hole.classList.contains('up')) {
+                missSound.play();
+            }
+            hole.removeEventListener('mouseleave', onMouseLeave);
+        }, { once: true });
+        
         setTimeout(() => {
-          hole.classList.remove("up");
-          if (!timeUp) peep();
+            if (hole.classList.contains('up')) {
+                missSound.play();
+            }
+            hole.classList.remove("up", "bomb");
+            hole.querySelector(".mole").style.backgroundImage = "url(assets/mole.svg)";
+            if (!timeUp) peep(); // This will keep calling peep until timeUp is true
         }, time);
       }
 
+      // Add at the top with other DOM selections
+      const bombHitsDisplay = document.getElementById('bombHitsDisplay');
+      
       function startGame() {
-        // Disable start button
-        const startButton = document.querySelector('.start-button');
-        startButton.disabled = true;
-        startButton.style.opacity = '0.5';
-        
-        clearInterval(countdown);
-        scoreBoard.textContent = 0;
-        timeUp = false;
-        score = 0;
-        let timeLeft = 120; // 2 minutes = 120 seconds
-        timeDisplay.textContent = timeLeft;
-        
-        // Remove all moles from view
-        holes.forEach(hole => hole.classList.remove("up"));
-        
-        peep();
-        countdown = setInterval(() => {
-          timeLeft--;
+          startSound.play();
+          const startButton = document.querySelector('.start-button');
+          startButton.style.display = 'none'; // Hide the button instead of just disabling it
+          
+          clearInterval(countdown);
+          scoreBoard.textContent = 0;
+          timeUp = false;
+          score = 0;
+          bombHits = 0;
+          bombHitsDisplay.textContent = '0/3';
+          warningPlayed = false;
+          let timeLeft = 120;
           timeDisplay.textContent = timeLeft;
-          if (timeLeft <= 0) {
-            clearInterval(countdown);
-            endGame();
-          }
-        }, 1000);
-        
-        setTimeout(() => {
-          timeUp = true;
-          endGame();
-        }, 120000); // 2 minutes
-}
-
-function closeGameOver() {
-        gameOverModal.style.display = 'none';
-        // Reset timer display
-        timeDisplay.textContent = '120';
-        // Re-enable start button
-        const startButton = document.querySelector('.start-button');
-        startButton.disabled = false;
-        startButton.style.opacity = '1';
-}
-
-      function endGame() {
-        timeUp = true;
-        clearInterval(countdown);
-        
-        // Remove all moles from view
-        holes.forEach(hole => hole.classList.remove("up"));
-        
-        // Update high score
-        if (score > highScore) {
-          highScore = score;
-          // In a real application, you would save this to localStorage
-          // localStorage.setItem('whackAMoleHighScore', highScore);
-        }
-        
-        // Show game over modal
-        finalScoreDisplay.textContent = score;
-        highScoreDisplay.textContent = highScore;
-        gameOverModal.style.display = 'flex';
-      }
-
-      function closeGameOver() {
-        gameOverModal.style.display = 'none';
-        // Reset timer display
-        timeDisplay.textContent = '120';
+          timeDisplay.style.color = 'initial';
+          
+          holes.forEach(hole => {
+              hole.classList.remove("up", "bomb");
+              hole.querySelector(".mole").style.backgroundImage = "url(assets/mole.svg)";
+          });
+          
+          peep();
+          countdown = setInterval(() => {
+              timeLeft--;
+              timeDisplay.textContent = timeLeft;
+              
+              if (timeLeft <= 10 && !warningPlayed) {
+                  endWarningSound.play();
+                  timeDisplay.style.color = 'red';
+                  warningPlayed = true;
+              }
+              
+              if (timeLeft <= 0) {
+                  clearInterval(countdown);
+                  timeUp = true;
+                  endGame();
+              }
+          }, 1000);
       }
 
       function bonk(e) {
-        if (!e.isTrusted) return;
-        if (timeUp) return;
-        
-        score++;
-        this.parentNode.classList.remove("up");
-        scoreBoard.textContent = score;
-        
-        // Add some visual feedback
-        this.style.transform = 'scale(0.8)';
-        setTimeout(() => {
-          this.style.transform = 'scale(1)';
-        }, 100);
+          if (!e.isTrusted) return;
+          if (timeUp) return;
+          
+          const hole = e.target.parentNode;
+          if (hole.classList.contains("bomb")) {
+              bombSound.play();
+              bombHits++;
+              bombHitsDisplay.textContent = `${bombHits}/3`; // Update bomb hits display
+              if (bombHits >= 3) {
+                  timeUp = true;
+                  clearInterval(countdown); // Stop the timer
+                  endGame();
+                  return;
+              }
+          } else {
+              hitSound.play();
+              score++;
+              scoreBoard.textContent = score;
+          }
+          
+          hole.classList.remove("up", "bomb");
+          hole.querySelector(".mole").style.backgroundImage = "url(assets/mole.svg)";
+          
+          // Add this line to spawn a new mole/bomb after clicking
+          if (!timeUp) peep();
       }
 
       moles.forEach((mole) => mole.addEventListener("click", bonk));
 
       // Initialize high score display
       highScoreDisplay.textContent = highScore;
+
+function endGame() {
+    timeUp = true;
+    clearInterval(countdown);
+    
+    if (score > highScore) {
+        highScore = score;
+        highScoreDisplay.textContent = highScore;
+    }
+    
+    finalScoreDisplay.textContent = score;
+    gameOverModal.style.display = 'block';
+    
+    // Show the start button again
+    const startButton = document.querySelector('.start-button');
+    startButton.style.display = 'block';
+}

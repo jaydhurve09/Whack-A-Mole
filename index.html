@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./assets/mole.svg">
     <link rel="stylesheet" type="text/css" href="./css/styles.css">
     <title>Whack a Mole</title>
   </head>
@@ -12,6 +13,9 @@
     <div class="button-container">
       <button class="start-button" onClick="startGame()">Start!</button>
       <div class="timer">Time Left: <span id="time">120</span>s</div>
+      <div class="game-stats">
+          <span>Bombs Hit: <span id="bombHitsDisplay">0/3</span></span>
+      </div>
     </div>
 
     <div class="game">
