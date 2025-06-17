@@ -53,7 +53,7 @@ let warningPlayed = false;
         });
         
         const isBomb = Math.random() < 0.2; // 20% chance of bomb
-        const time = isBomb ? randomTime(1500, 3000) : randomTime(1000, 2000); // Increased time ranges
+        const time = isBomb ? randomTime(2500, 4000) : randomTime(2000, 3500); // Increased time ranges for better gameplay
         const hole = randomHole(holes);
         
         if (isBomb) {
@@ -155,7 +155,7 @@ let warningPlayed = false;
       moles.forEach((mole) => mole.addEventListener("click", bonk));
 
       // Initialize high score display
-      highScoreDisplay.textContent = highScore;
+    //   highScoreDisplay.textContent = highScore;
 
 function endGame() {
     timeUp = true;
