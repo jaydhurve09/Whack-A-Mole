@@ -46,6 +46,12 @@ let warningPlayed = false;
       function peep() {
         if (timeUp) return;
         
+        // Remove any existing moles/bombs first
+        holes.forEach(hole => {
+            hole.classList.remove("up", "bomb");
+            hole.querySelector(".mole").style.backgroundImage = "url(assets/mole.svg)";
+        });
+        
         const isBomb = Math.random() < 0.2; // 20% chance of bomb
         const time = isBomb ? randomTime(1500, 3000) : randomTime(1000, 2000); // Increased time ranges
         const hole = randomHole(holes);
