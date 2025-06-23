@@ -157,7 +157,7 @@ let warningPlayed = false;
       // Initialize high score display
     //   highScoreDisplay.textContent = highScore;
 
-function endGame() {
+async function endGame() {
     timeUp = true;
     clearInterval(countdown);
     
@@ -167,6 +167,52 @@ function endGame() {
     // Show the start button again
     const startButton = document.querySelector('.start-button');
     startButton.style.display = 'block';
+    
+    // Get match_id and player_id from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const matchId = urlParams.get('match_id');
+    const playerId = urlParams.get('player_id');
+    
+    // Only submit score if we have a match_id and player_id
+    if (matchId && playerId) {
+        try {
+            const response = await fetch('/api/games/submit-score', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    match_id: matchId,
+                    player_id: playerId,
+                    score: score,
+                    game: 'wackamole'
+                })
+            });
+            
+            const result = await response.json();
+            console.log('Score submission result:', result);
+            
+            if (result.success) {
+                if (result.winner) {
+                    if (result.winner.player_id === playerId) {
+                        alert(`You won the match with ${result.winner.score} points!`);
+                    } else {
+                        alert(`Match over! The winner is: ${result.winner.player_name} with ${result.winner.score} points`);
+                    }
+                } else if (result.isDraw) {
+                    alert(`It's a draw! Both players scored ${result.currentPlayer.score} points`);
+                } else if (result.message) {
+                    console.log(result.message);
+                }
+            } else {
+                console.error('Failed to submit score:', result.error);
+            }
+        } catch (error) {
+            console.error('Error submitting score:', error);
+        }
+    } else {
+        console.log('No match_id or player_id found. Score not submitted to server.');
+    }
 }
 
 function closeGameOver() {
